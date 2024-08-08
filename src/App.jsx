@@ -5,8 +5,12 @@ import Log from "./components/Log.jsx";
 import {WINNING_COMBINATIONS} from "./data/winning-combinations.js";
 import GameOver from "./components/GameOver.jsx";
 
+const PLAYERS = {
+    'X': 'Player 1',
+    'O': 'Player 2'
+}
 
-const initialGameboard = [
+const INITIAL_GAMEBOARD = [
     [null, null, null],
     [null, null, null],
     [null, null, null]
@@ -20,26 +24,7 @@ function deriveActivePlayer(gameTurns) {
     return currentPlayer;
 }
 
-
-
-function App() {
-    const [players, setPlayers] = useState({
-        'X': 'Player 1',
-        'O': 'Player 2'
-    })
-    const [gameLog, updateGameLog] = useState([]);
-    // const [activePlayer, setActivePlayer] = useState('X')
-
-    const activePlayer = deriveActivePlayer(gameLog);
-
-    let gameBoard = [...initialGameboard.map(array => [...array])];
-
-    for (const turn of gameLog) {
-        const {square, player} = turn;
-        const { row, col } = square;
-
-        gameBoard[row][col] = player;
-    }
+function deriveWinner(gameBoard, players) {
     let winner;
 
     for (const combination of WINNING_COMBINATIONS) {
@@ -51,7 +36,30 @@ function App() {
             winner = players[firstSquareSymbol];
         }
     }
+    return winner;
+}
 
+function deriveGameBoard(gameLog) {
+    let gameBoard = [...INITIAL_GAMEBOARD.map(array => [...array])];
+
+    for (const turn of gameLog) {
+        const {square, player} = turn;
+        const {row, col} = square;
+
+        gameBoard[row][col] = player;
+    }
+
+    return gameBoard;
+}
+
+
+function App() {
+    const [players, setPlayers] = useState(PLAYERS)
+    const [gameLog, updateGameLog] = useState([]);
+
+    const activePlayer = deriveActivePlayer(gameLog);
+    const gameBoard = deriveGameBoard(gameLog);
+    const winner = deriveWinner(gameBoard, players);
     const hasDraw = gameLog.length === 9 && !winner
 
     function handlePlayerNameChange(symbol, newName) {
@@ -69,7 +77,7 @@ function App() {
 
             const currentPlayer = deriveActivePlayer(prevLog);
 
-            const updatedLog = [{ square: {row: rowIndex, col: colIndex}, player: currentPlayer }, ...prevLog];
+            const updatedLog = [{square: {row: rowIndex, col: colIndex}, player: currentPlayer}, ...prevLog];
             return updatedLog;
         });
     }
@@ -78,30 +86,30 @@ function App() {
         updateGameLog([]);
     }
 
-  return <main>
-    <div id="game-container">
-      <ol id="players" className="highlight-player">
-          <Player
-              initialName="Player 1"
-              symbol="X"
-              isActive={activePlayer === 'X'}
-              onChangeName={handlePlayerNameChange}
-          />
-          <Player
-              initialName="Player 2"
-              symbol="O"
-              isActive={activePlayer === 'O'}
-              onChangeName={handlePlayerNameChange}
-          />
-      </ol>
-        { (winner || hasDraw) && <GameOver winner={winner} onRestart={handleRestart} />}
-        <GameBoard
-            onSelectedSquare={handleSelectedSquare}
-            activePlayerSymbol={activePlayer}
-            board={gameBoard}/>
-    </div>
-      <Log turns={gameLog}/>
-  </main>
+    return <main>
+        <div id="game-container">
+            <ol id="players" className="highlight-player">
+                <Player
+                    initialName={PLAYERS.X}
+                    symbol="X"
+                    isActive={activePlayer === 'X'}
+                    onChangeName={handlePlayerNameChange}
+                />
+                <Player
+                    initialName={PLAYERS.O}
+                    symbol="O"
+                    isActive={activePlayer === 'O'}
+                    onChangeName={handlePlayerNameChange}
+                />
+            </ol>
+            {(winner || hasDraw) && <GameOver winner={winner} onRestart={handleRestart}/>}
+            <GameBoard
+                onSelectedSquare={handleSelectedSquare}
+                activePlayerSymbol={activePlayer}
+                board={gameBoard}/>
+        </div>
+        <Log turns={gameLog}/>
+    </main>
 }
 
 export default App
